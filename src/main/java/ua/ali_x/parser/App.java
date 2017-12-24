@@ -11,9 +11,6 @@ import ua.ali_x.parser.service.writer.Writer;
 //todo price (different tags)
 //todo shipping price (no tag)
 
-//todo unit tests
-//todo user emulation
-
 public class App {
 
     public static void main(String[] args) {
