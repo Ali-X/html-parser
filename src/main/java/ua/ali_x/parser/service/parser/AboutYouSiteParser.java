@@ -3,6 +3,8 @@ package ua.ali_x.parser.service.parser;
 import com.sun.istack.internal.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import ua.ali_x.parser.model.Offer;
 
 import java.io.IOException;
@@ -58,23 +60,30 @@ public class AboutYouSiteParser implements Parser {
 
     private String getDescription(@NotNull Document item) {
         String result;
+        String temp;
         result = item.select("p[class^=productDescriptionText]").html();
         if (result.isEmpty()) {
-            //todo description
+            //todo arrange description elements
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(item.select("p[class=subline_19eqe01]").html());
-            stringBuilder.append(": ");
-            stringBuilder.append(item.select("ul[class=orderedList_1q5u47i] > div > li").html());
-            stringBuilder.append("\n");
-            stringBuilder.append(item.select("p[class=subline_19eqe01]").html());
-            stringBuilder.append(": ");
+            Elements elements = item.select("div.container_iv4rb4");
+            for (Element element : elements) {
+                temp = element.select("p.subline_19eqe01").html() + ":\n";
+                temp = removeComments(temp);
+                stringBuilder.append(temp);
+                Elements list = elements.select("li");
+                for (Element listElement : list) {
+                    temp = listElement.html() + "\n";
+                    temp = removeComments(temp);
+                    stringBuilder.append(temp);
+                }
+            }
             result = stringBuilder.toString();
         }
         return result;
     }
 
-    private String getColor(String link) {
-        //todo colors
+    private String getColor(String link) throws IOException {
+        //todo colors (can't find tooltips)
         try {
             return Jsoup.connect(link)
                     .get()
@@ -87,30 +96,34 @@ public class AboutYouSiteParser implements Parser {
     }
 
     private String getInitialPrice(@NotNull Document item) {
-        //todo price
         String result;
-        result = item.select("span[class^=beforePrice], span[class^=originalPrice]").html();
+        result = item.select("span[class^=beforePrice]").html();
+        if (result.isEmpty())
+            result = item.select("span[class^=originalPrice]").html();
         return result;
     }
 
     private String getPrice(@NotNull Document item) {
-        //todo price
         String result;
-        result = item.select("span[class^=finalPrice], span[class^=price]").html();
+        result = item.select("span[class^=finalPrice]").html();
+        if (result.isEmpty())
+            result = item.select("span[class^=price]").html();
         return result;
     }
 
     private String getArticle(@NotNull Document item) {
-        //todo article
         String result;
-        result = item.select("p[class^=articleNumber], div[class=container_iv4rb4]").html();
+        result = item.select("p[class^=articleNumber]").html();
+        if (result.isEmpty()) {
+            result = item.select("div[class=container_iv4rb4]").first().ownText();
+            result = result.replaceAll("Artikel-Nr: ", "");
+        }
         return result;
     }
 
     private String getShippingPrice(@NotNull Document item) {
-        //todo shipping price
         String result;
-        result = item.select("").html();
+        result = item.select("span[class^=shippingPrice]").html();
         return result;
     }
 
@@ -143,4 +156,9 @@ public class AboutYouSiteParser implements Parser {
         }
     }
 
+    private String removeComments(String text) {
+        text = text.replaceAll("<!--(.*?)-->", "");
+        text = text.replaceAll("(?m)^[ \t]*\r?\n", "");
+        return text;
+    }
 }

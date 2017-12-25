@@ -6,10 +6,6 @@ import ua.ali_x.parser.service.serializer.Serializer;
 import ua.ali_x.parser.service.serializer.XmlSerializer;
 import ua.ali_x.parser.service.writer.BufferedWriterImpl;
 import ua.ali_x.parser.service.writer.Writer;
-//todo article number (different tags)
-//todo color can't find tag
-//todo price (different tags)
-//todo shipping price (no tag)
 
 public class App {
 
