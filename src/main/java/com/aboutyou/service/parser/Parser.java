@@ -1,6 +1,6 @@
-package ua.ali_x.parser.service.parser;
+package com.aboutyou.service.parser;
 
-import ua.ali_x.parser.model.Offer;
+import com.aboutyou.model.Offer;
 
 import java.util.List;
 

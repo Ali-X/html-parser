@@ -1,4 +1,4 @@
-package ua.ali_x.parser.model;
+package com.aboutyou.model;
 
 import java.util.List;
 

@@ -1,11 +1,10 @@
-package ua.ali_x.parser.service.parser;
+package com.aboutyou.service.parser;
 
-import com.sun.istack.internal.NotNull;
+import com.aboutyou.model.Offer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import ua.ali_x.parser.model.Offer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,47 +17,58 @@ public class AboutYouSiteParser implements Parser {
 
     @Override
     public List<Offer> parse(String keyword) {
-        //counter for HTTP request
-        int requests = 0;
+        int numRequests = 0;
         List<String> links;
         List<Offer> offerList = new ArrayList<>();
+        String nextPageLink = "";
         try {
             Document doc = Jsoup.connect("http://www.aboutyou.de/suche?term=" + keyword).get();
-            ++requests;
-            links = getOfferPagesLinks(doc);
-            for (String link : links) {
-                //breaks in 1-3 seconds
-                breakPause();
-                Document item = Jsoup.connect(link).get();
-                ++requests;
-                Offer offer = new Offer();
-                offer.setName(getName(item));
-                offer.setBrand(getBrand(item));
-                List<String> colors = new ArrayList<>();
-                List<String> colorLinks = getColorLinks(item);
-                for (String color : colorLinks) {
-                    //breaks in 1-3 seconds
-                    breakPause();
-                    colors.add(getColor(color));
-                    ++requests;
+            ++numRequests;
+            do {
+                links = getOfferPagesLinks(doc);
+                for (String link : links) {
+                    simulateHumanWaitTime();
+                    Document item = Jsoup.connect(link).get();
+                    ++numRequests;
+                    Offer offer = new Offer();
+                    offer.setName(getName(item));
+                    offer.setBrand(getBrand(item));
+                    List<String> colors = new ArrayList<>();
+                    List<String> colorLinks = getColorLinks(item);
+                    for (String color : colorLinks) {
+                        simulateHumanWaitTime();
+                        colors.add(getColor(color));
+                        ++numRequests;
+                    }
+                    offer.setColors(colors);
+                    offer.setPrice(getPrice(item));
+                    offer.setInitialPrice(getInitialPrice(item));
+                    offer.setDescription(getDescription(item));
+                    offer.setArticleID(getArticle(item));
+                    offer.setShippingCosts(getShippingPrice(item));
+                    offerList.add(offer);
                 }
-                offer.setColors(colors);
-                offer.setPrice(getPrice(item));
-                offer.setInitialPrice(getInitialPrice(item));
-                offer.setDescription(getDescription(item));
-                offer.setArticleID(getArticle(item));
-                offer.setShippingCosts(getShippingPrice(item));
-                offerList.add(offer);
-            }
+                nextPageLink = getNextPageLink(doc);
+                if (!nextPageLink.isEmpty()) {
+                    doc = Jsoup.connect(nextPageLink).get();
+                    ++numRequests;
+                }
+            } while (!nextPageLink.isEmpty());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Amount of triggered HTTP request: " + requests);
+        System.out.println("Amount of triggered HTTP request: " + numRequests);
         System.out.println("Amount of extracted products: " + offerList.size());
         return offerList;
     }
 
-    private String getDescription(@NotNull Document item) {
+    private String getNextPageLink(Document doc) {
+        String result;
+        result = doc.select("li.nextButton_3hmsj > a[href]").attr("abs:href");
+        return result;
+    }
+
+    private String getDescription(Document item) {
         String result;
         String temp;
         result = item.select("p[class^=productDescriptionText]").html();
@@ -83,7 +93,7 @@ public class AboutYouSiteParser implements Parser {
     }
 
     private String getColor(String link) throws IOException {
-        //todo colors (can't find tooltips)
+        //todo colors (JSoup doesn't parse react pages)
         try {
             return Jsoup.connect(link)
                     .get()
@@ -95,7 +105,7 @@ public class AboutYouSiteParser implements Parser {
         return "";
     }
 
-    private String getInitialPrice(@NotNull Document item) {
+    private String getInitialPrice(Document item) {
         String result;
         result = item.select("span[class^=beforePrice]").html();
         if (result.isEmpty())
@@ -103,7 +113,7 @@ public class AboutYouSiteParser implements Parser {
         return result;
     }
 
-    private String getPrice(@NotNull Document item) {
+    private String getPrice(Document item) {
         String result;
         result = item.select("span[class^=finalPrice]").html();
         if (result.isEmpty())
@@ -111,7 +121,7 @@ public class AboutYouSiteParser implements Parser {
         return result;
     }
 
-    private String getArticle(@NotNull Document item) {
+    private String getArticle(Document item) {
         String result;
         result = item.select("p[class^=articleNumber]").html();
         if (result.isEmpty()) {
@@ -121,34 +131,36 @@ public class AboutYouSiteParser implements Parser {
         return result;
     }
 
-    private String getShippingPrice(@NotNull Document item) {
+    private String getShippingPrice(Document item) {
+        //todo shipping price is absent on site
         String result;
         result = item.select("span[class^=shippingPrice]").html();
         return result;
     }
 
-    private List<String> getColorLinks(@NotNull Document item) {
+    private List<String> getColorLinks(Document item) {
         return item.select("div[class=thumbsWrapper_1rutc76] > a[href]")
                 .eachAttr("abs:href");
     }
 
-    private String getName(@NotNull Document item) {
+    private String getName(Document item) {
         String result;
         result = item.select("div[class=name_1jqcvyg]").html();
         return result;
     }
 
-    private String getBrand(@NotNull Document item) {
+    private String getBrand(Document item) {
         String result;
         result = item.select("a[class=brand_1h3c7xk] > img").attr("alt");
         return result;
     }
 
-    private List<String> getOfferPagesLinks(@NotNull Document document) {
+    private List<String> getOfferPagesLinks(Document document) {
+        //todo add condition check for different tags
         return document.select("div[class=product-image loaded] > a[href]").eachAttr("abs:href");
     }
 
-    private void breakPause() {
+    private void simulateHumanWaitTime() {
         try {
             Thread.sleep(randomGenerator.nextInt((3000 - 1000) + 1) + 1000);
         } catch (InterruptedException e) {

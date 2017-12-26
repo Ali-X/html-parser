@@ -1,4 +1,4 @@
-package ua.ali_x.parser.service.writer;
+package com.aboutyou.service.writer;
 
 public interface Writer {
 

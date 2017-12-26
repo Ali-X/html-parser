@@ -1,7 +1,7 @@
-package ua.ali_x.parser.service.serializer;
+package com.aboutyou.service.serializer;
 
 import org.junit.Test;
-import ua.ali_x.parser.model.Offer;
+import com.aboutyou.model.Offer;
 
 import java.util.ArrayList;
 import java.util.List;

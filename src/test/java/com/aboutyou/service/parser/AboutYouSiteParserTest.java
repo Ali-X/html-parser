@@ -1,4 +1,4 @@
-package ua.ali_x.parser.service.parser;
+package com.aboutyou.service.parser;
 
 import org.junit.Test;
 
