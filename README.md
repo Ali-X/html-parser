@@ -4,9 +4,9 @@ The application allows to get offers by keyword for search from [About You web s
 
 ## Getting Started
 
-Download java archive by path:
+Download java archive by name:
       
-   ```target\aboutyou-parser-1.0.jar```
+   ```aboutyou-parser-1.0.jar```
 
 ## Running
 
